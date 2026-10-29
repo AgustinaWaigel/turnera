@@ -1,26 +1,206 @@
 @import "tailwindcss";
 
+/*
+ * Paleta en OKLCH derivada de dos variables que llegan del .env:
+ *   --h  (NEXT_PUBLIC_BRAND_HUE)    tono de la laca
+ *   --c  (NEXT_PUBLIC_BRAND_CHROMA) saturación de la laca
+ * Los neutros también se tiñen con el mismo tono, así cada negocio tiene su
+ * propio "papel" y no un gris genérico.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --h: 4;
+  --c: 0.19;
+
+  --ground: oklch(0.968 0.012 var(--h));
+  --paper: oklch(0.993 0.004 var(--h));
+  --ink: oklch(0.23 0.035 var(--h));
+  --ink-soft: oklch(0.44 0.035 var(--h));
+  --line: oklch(0.88 0.02 var(--h));
+  --line-strong: oklch(0.78 0.03 var(--h));
+
+  --lacquer: oklch(0.48 var(--c) var(--h));
+  --lacquer-strong: oklch(0.38 calc(var(--c) * 0.85) var(--h));
+  --lacquer-wash: oklch(0.935 calc(var(--c) * 0.22) var(--h));
+  --on-lacquer: oklch(0.985 0.012 var(--h));
+  --on-lacquer-soft: oklch(0.92 0.035 var(--h));
+
+  --ok: oklch(0.47 0.11 155);
+  --ok-wash: oklch(0.95 0.035 155);
+  --warn: oklch(0.5 0.12 70);
+  --warn-wash: oklch(0.95 0.045 85);
+  --danger: oklch(0.5 0.18 27);
+  --danger-wash: oklch(0.95 0.03 27);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ground: var(--ground);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-lacquer: var(--lacquer);
+  --color-lacquer-strong: var(--lacquer-strong);
+  --color-lacquer-wash: var(--lacquer-wash);
+  --color-on-lacquer: var(--on-lacquer);
+  --color-on-lacquer-soft: var(--on-lacquer-soft);
+  --color-ok: var(--ok);
+  --color-ok-wash: var(--ok-wash);
+  --color-warn: var(--warn);
+  --color-warn-wash: var(--warn-wash);
+  --color-danger: var(--danger);
+  --color-danger-wash: var(--danger-wash);
+
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-hanken), ui-sans-serif, sans-serif;
+
+  --ease-out-expo: var(--ease-out);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* --- Superficies del navegador: también son parte del diseño ------------- */
+
+html {
+  background: var(--ground);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+  scrollbar-color: var(--line-strong) transparent;
+  accent-color: var(--lacquer);
+  caret-color: var(--lacquer);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ground);
+  font-feature-settings: "ss01", "cv11";
+}
+
+::selection {
+  background: var(--lacquer);
+  color: var(--on-lacquer);
+}
+
+:focus-visible {
+  outline: 2px solid var(--lacquer);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+a {
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: oklch(0.5 0.03 var(--h));
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* --- Tip de uña: el selector de día ------------------------------------- */
+
+.tip {
+  border-radius: 999px 999px 14px 14px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    background-color 220ms var(--ease-out),
+    color 220ms var(--ease-out),
+    border-color 220ms var(--ease-out),
+    box-shadow 220ms var(--ease-out),
+    transform 220ms var(--ease-out);
+}
+
+/* Brillo de esmalte recién aplicado: una veta de luz sobre la laca. */
+.tip::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 17%;
+  width: 13%;
+  height: 26%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.55), oklch(1 0 0 / 0));
+  opacity: 0;
+  transform: translateY(8px) scaleY(0.6);
+  transition:
+    opacity 320ms var(--ease-out),
+    transform 420ms var(--ease-out);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.peer:checked + .tip {
+  background: var(--lacquer);
+  border-color: var(--lacquer);
+  color: var(--on-lacquer);
+  box-shadow: 0 10px 18px -10px oklch(0.38 calc(var(--c) * 0.85) var(--h) / 0.7);
+  transform: translateY(-3px);
+}
+
+.peer:checked + .tip::after {
+  opacity: 1;
+  transform: none;
+}
+
+.peer:focus-visible + .tip {
+  outline: 2px solid var(--lacquer);
+  outline-offset: 3px;
+}
+
+/* --- Tarjeta de turno ---------------------------------------------------- */
+
+.perforation {
+  background-image: radial-gradient(circle, var(--line-strong) 1.3px, transparent 1.6px);
+  background-size: 10px 4px;
+  background-repeat: repeat-x;
+  background-position: center;
+  height: 4px;
+}
+
+.reveal {
+  animation: reveal 900ms var(--ease-out) both;
+}
+
+@keyframes reveal {
+  from {
+    clip-path: inset(0 0 100% 0 round 18px);
+    transform: translateY(14px);
+    filter: blur(4px);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 18px);
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
 }

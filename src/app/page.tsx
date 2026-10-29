@@ -1,69 +1,89 @@
-import Image from "next/image";
+import Script from "next/script";
+import { headers } from "next/headers";
+import { BookingFlow } from "@/components/booking/booking-flow";
+import { business, whatsappLink } from "@/lib/config";
+import { getActiveServices, getBookableDays } from "@/lib/booking/data";
+import { serverEnv } from "@/lib/env";
+import { turnstileEnabled } from "@/lib/security/turnstile";
+import { AtSign, MapPin, MessageCircle } from "@/components/ui/icons";
 
-export default function Home() {
+export default async function Home() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const env = serverEnv();
+  const [services, days] = await Promise.all([getActiveServices(), getBookableDays()]);
+  const captcha = turnstileEnabled() ? env.NEXT_PUBLIC_TURNSTILE_SITE_KEY! : null;
+  const wa = whatsappLink(`Hola! Te escribo desde la página de turnos de ${business.name}.`);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="lg:grid lg:min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <header className="relative bg-lacquer text-on-lacquer lg:sticky lg:top-0 lg:h-dvh">
+        <div className="mx-auto flex h-full max-w-xl flex-col px-5 pt-10 pb-12 sm:px-8 lg:mx-0 lg:max-w-none lg:px-12 lg:pt-14 lg:pb-12 xl:px-16">
+          <h1 className="font-display text-[clamp(2.75rem,9vw,5.5rem)] leading-[0.92] font-bold tracking-[-0.035em] [font-stretch:88%]">
+            {business.name}
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <p className="mt-5 max-w-[34ch] text-lg leading-snug text-on-lacquer-soft">{business.tagline}</p>
+
+          <div className="mt-auto hidden pt-12 lg:block">
+            <p className="max-w-[40ch] text-sm leading-relaxed text-on-lacquer-soft">{business.copy.policy}</p>
+          </div>
+
+          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm lg:mt-6">
+            {business.address && (
+              <li>
+                <ContactLink href={business.mapsUrl || null} icon={<MapPin aria-hidden className="size-4" />}>
+                  {business.address}
+                </ContactLink>
+              </li>
+            )}
+            {wa && (
+              <li>
+                <ContactLink href={wa} icon={<MessageCircle aria-hidden className="size-4" />}>
+                  WhatsApp
+                </ContactLink>
+              </li>
+            )}
+            {business.instagram && (
+              <li>
+                <ContactLink
+                  href={`https://instagram.com/${business.instagram}`}
+                  icon={<AtSign aria-hidden className="size-4" />}
+                >
+                  {business.instagram}
+                </ContactLink>
+              </li>
+            )}
+          </ul>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-2xl px-5 pt-10 pb-24 sm:px-8 lg:max-w-3xl lg:px-14 lg:pt-14 xl:px-20">
+        <BookingFlow services={services} days={days} captchaSiteKey={captcha} />
+        <p className="mt-14 max-w-[60ch] text-sm leading-relaxed text-ink-soft lg:hidden">{business.copy.policy}</p>
       </main>
+
+      {captcha && (
+        <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" nonce={nonce} />
+      )}
     </div>
+  );
+}
+
+function ContactLink({ href, icon, children }: { href: string | null; icon: React.ReactNode; children: React.ReactNode }) {
+  const inner = (
+    <span className="inline-flex items-center gap-2">
+      {icon}
+      <span>{children}</span>
+    </span>
+  );
+  if (!href) return <span className="text-on-lacquer-soft">{inner}</span>;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-on-lacquer underline decoration-on-lacquer/40 hover:decoration-on-lacquer focus-visible:outline-on-lacquer"
+    >
+      {inner}
+    </a>
   );
 }
